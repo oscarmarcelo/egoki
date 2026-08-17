@@ -23,7 +23,6 @@
 	"files": [
 		"source"
 	],
-	"private": true,
 	"type": "module",
 	"main": "source/index.js",
 	"exports": {
@@ -32,7 +31,7 @@
 	"scripts": {
 		"test": "xo && c8 -r=text -r=html ava",
 		"prepublishOnly": "npm test",
-		"release": "np --dry-run"
+		"release": "np"
 	},
 	"dependencies": {
 		"hermeneia": "^0.1.0"
