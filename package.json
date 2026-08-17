@@ -1,0 +1,46 @@
+{
+	"name": "egoki",
+	"version": "0.0.0",
+	"description": "A composable JavaScript schema library for constructing, validating, and merging structured values.",
+	"keywords": [
+		"schema",
+		"validation",
+		"validator",
+		"data-validation",
+		"object-schema",
+		"merge"
+	],
+	"author": "Oscar Marcelo (https://oscarmarcelo.com)",
+	"homepage": "https://github.com/oscarmarcelo/egoki",
+	"bugs": {
+		"url": "https://github.com/oscarmarcelo/egoki/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/oscarmarcelo/egoki.git"
+	},
+	"license": "ISC",
+	"files": [
+		"source"
+	],
+	"private": true,
+	"type": "module",
+	"main": "source/index.js",
+	"exports": {
+		".": "./source/index.js"
+	},
+	"scripts": {
+		"test": "xo && c8 -r=text -r=html ava",
+		"prepublishOnly": "npm test",
+		"release": "np --dry-run"
+	},
+	"dependencies": {
+		"hermeneia": "^0.1.0"
+	},
+	"devDependencies": {
+		"ava": "^8.0.1",
+		"c8": "^12.0.0",
+		"np": "^12.0.1",
+		"xo": "^4.0.0"
+	}
+}
