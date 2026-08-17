@@ -1,0 +1,97 @@
+import test from 'ava';
+
+import Schema from '../../source/index.js';
+
+
+
+test('Primitive schemas expose enum()', t => {
+	for (const schema of [Schema.string(), Schema.number(), Schema.boolean()]) {
+		t.is(
+			typeof schema.enum,
+			'function',
+		);
+	}
+});
+
+
+test('Composite schemas do not expose enum()', t => {
+	for (const schema of [Schema.array(), Schema.object()]) {
+		t.is(
+			schema.enum,
+			undefined,
+		);
+	}
+});
+
+
+test('ArraySchema exposes array merge strategies', t => {
+	const schema = Schema.array();
+
+	t.is(
+		typeof schema.append,
+		'function',
+	);
+
+	t.is(
+		typeof schema.prepend,
+		'function',
+	);
+
+	t.is(
+		typeof schema.keyedBy,
+		'function',
+	);
+});
+
+
+test('ObjectSchema exposes deep()', t => {
+	t.is(
+		typeof Schema.object().deep,
+		'function',
+	);
+});
+
+
+test('Schemas do not expose incompatible merge strategy builders', t => {
+	for (const schema of [Schema.string(), Schema.number(), Schema.boolean()]) {
+		t.is(
+			schema.append,
+			undefined,
+		);
+
+		t.is(
+			schema.prepend,
+			undefined,
+		);
+
+		t.is(
+			schema.keyedBy,
+			undefined,
+		);
+
+		t.is(
+			schema.deep,
+			undefined,
+		);
+	}
+
+	t.is(
+		Schema.array().deep,
+		undefined,
+	);
+
+	t.is(
+		Schema.object().append,
+		undefined,
+	);
+
+	t.is(
+		Schema.object().prepend,
+		undefined,
+	);
+
+	t.is(
+		Schema.object().keyedBy,
+		undefined,
+	);
+});
