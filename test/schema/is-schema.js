@@ -53,6 +53,18 @@ test('Schema.isSchema() returns true for an ObjectSchema', t => {
 });
 
 
+
+test('Schema.isSchema() returns true for a UnionSchema', t => {
+	const schema = Schema.union([
+		Schema.string(),
+	]);
+
+	t.true(
+		Schema.isSchema(schema),
+	);
+});
+
+
 for (const value of nonSchemas) {
 	test(`Schema.isSchema() returns false for ${label(value)}`, t => {
 		t.false(

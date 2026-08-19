@@ -387,6 +387,346 @@ test('ArraySchema.extend() replaces incompatible item schemas', t => {
 
 
 // =============================================================================
+// UnionSchema
+// =============================================================================
+
+test('UnionSchema.extend() recursively extends compatible alternatives by position', t => {
+	const baseObject = Schema.object({
+		name: Schema.string(),
+	});
+
+	const extensionObject = Schema.object({
+		age: Schema.number(),
+	});
+
+	const base = Schema.union([
+		Schema.string(),
+		baseObject,
+	]);
+
+	const extension = Schema.union([
+		Schema.string().enum(['auto']),
+		extensionObject,
+	]);
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test('auto'),
+	);
+
+	t.false(
+		extended.test('other'),
+	);
+
+	t.true(
+		extended.test({
+			name: 'Ada',
+			age: 36,
+		}),
+	);
+
+	t.false(
+		extended.test({
+			name: 'Ada',
+		}),
+	);
+});
+
+
+test('UnionSchema.extend() replaces incompatible alternative layouts', t => {
+	const base = Schema.union([
+		Schema.string().enum(['base']),
+		Schema.number().enum([1]),
+	]);
+
+	const extension = Schema.union([
+		Schema.number().enum([2]),
+		Schema.boolean(),
+	]);
+
+	const extended = base.extend(extension);
+
+	t.false(
+		extended.test('base'),
+	);
+
+	t.false(
+		extended.test(1),
+	);
+
+	t.true(
+		extended.test(2),
+	);
+
+	t.true(
+		extended.test(true),
+	);
+});
+
+
+test('UnionSchema.extend() replaces alternatives when their counts differ', t => {
+	const base = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]);
+
+	const extension = Schema.union([
+		Schema.boolean(),
+	]);
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test(true),
+	);
+
+	t.false(
+		extended.test('text'),
+	);
+
+	t.false(
+		extended.test(1),
+	);
+});
+
+
+test('UnionSchema.extend() treats reordered alternative types as incompatible', t => {
+	const base = Schema.union([
+		Schema.string().enum(['base']),
+		Schema.number().enum([1]),
+	]);
+
+	const extension = Schema.union([
+		Schema.number().enum([2]),
+		Schema.string().enum(['extension']),
+	]);
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test(2),
+	);
+
+	t.true(
+		extended.test('extension'),
+	);
+
+	t.false(
+		extended.test(1),
+	);
+
+	t.false(
+		extended.test('base'),
+	);
+});
+
+
+test('UnionSchema.extend() extends repeated alternative types by position', t => {
+	const baseFirst = Schema.object({
+		name: Schema.string(),
+	});
+
+	const baseSecond = Schema.object({
+		code: Schema.number(),
+	});
+
+	const extensionFirst = Schema.object({
+		age: Schema.number(),
+	});
+
+	const extensionSecond = Schema.object({
+		enabled: Schema.boolean(),
+	});
+
+	const base = Schema.union([
+		baseFirst,
+		baseSecond,
+	]);
+
+	const extension = Schema.union([
+		extensionFirst,
+		extensionSecond,
+	]);
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test({name: 'Ada', age: 36}),
+	);
+
+	t.true(
+		extended.test({code: 1, enabled: true}),
+	);
+
+	t.false(
+		extended.test({name: 'Ada', enabled: true}),
+	);
+});
+
+
+test('UnionSchema.extend() rejects replaced alternatives that invalidate a preserved union default', t => {
+	const base = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]).default('base');
+
+	const extension = Schema.union([
+		Schema.number(),
+		Schema.boolean(),
+	]);
+
+	assertTypeError(
+		t,
+		() => {
+			base.extend(extension);
+		},
+	);
+});
+
+
+test('UnionSchema.extend() rejects compatible alternatives that invalidate a preserved union default', t => {
+	const base = Schema.union([
+		Schema.string(),
+	]).default('base');
+
+	const extension = Schema.union([
+		Schema.string().enum(['extension']),
+	]);
+
+	assertTypeError(
+		t,
+		() => {
+			base.extend(extension);
+		},
+	);
+});
+
+
+test('UnionSchema.extend() applies an extension union-level default', t => {
+	const base = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]).default('base');
+
+	const extension = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]).default(42);
+
+	const extended = base.extend(extension);
+
+	t.is(
+		extended.applyDefaults(undefined),
+		42,
+	);
+});
+
+
+test('ObjectSchema.extend() recursively extends compatible union property schemas', t => {
+	const baseObject = Schema.object({
+		name: Schema.string(),
+	});
+
+	const extensionObject = Schema.object({
+		age: Schema.number(),
+	});
+
+	const baseUnion = Schema.union([
+		Schema.string(),
+		baseObject,
+	]);
+
+	const extensionUnion = Schema.union([
+		Schema.string().enum(['auto']),
+		extensionObject,
+	]);
+
+	const base = Schema.object({
+		value: baseUnion,
+	});
+
+	const extension = Schema.object({
+		value: extensionUnion,
+	});
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test({value: 'auto'}),
+	);
+
+	t.true(
+		extended.test({
+			value: {
+				name: 'Ada',
+				age: 36,
+			},
+		}),
+	);
+
+	t.false(
+		extended.test({value: 'other'}),
+	);
+});
+
+
+test('ArraySchema.extend() recursively extends compatible union item schemas', t => {
+	const baseUnion = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]);
+
+	const extensionUnion = Schema.union([
+		Schema.string().enum(['auto']),
+		Schema.number().enum([1]),
+	]);
+
+	const base = Schema.array(baseUnion);
+	const extension = Schema.array(extensionUnion);
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test(['auto', 1]),
+	);
+
+	t.false(
+		extended.test(['other']),
+	);
+});
+
+
+test('ObjectSchema.extend() recursively extends compatible additional-property union schemas', t => {
+	const baseUnion = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]);
+
+	const extensionUnion = Schema.union([
+		Schema.string().enum(['auto']),
+		Schema.number().enum([1]),
+	]);
+
+	const base = Schema.object()
+		.additionalProperties(baseUnion);
+
+	const extension = Schema.object()
+		.additionalProperties(extensionUnion);
+
+	const extended = base.extend(extension);
+
+	t.true(
+		extended.test({first: 'auto', second: 1}),
+	);
+
+	t.false(
+		extended.test({first: 'other'}),
+	);
+});
+
+
+
+// =============================================================================
 // Immutability
 // =============================================================================
 

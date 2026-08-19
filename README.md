@@ -10,7 +10,7 @@ From Basque (`/eˈɣ̞o.ki/` → eh-GOH-kee), meaning “suitable, appropriate, 
 
 - Compose schemas with an immutable fluent API.
 - Extend compatible schemas recursively without mutating either schema.
-- Validate primitive values, arrays, and plain objects.
+- Validate primitive values, arrays, plain objects, and explicit unions of schemas.
 - Configure required and optional values, defaults, and allowed values.
 - Recursively validate, default, and merge nested arrays and objects.
 - Merge values according to the schema that describes them.
@@ -41,6 +41,10 @@ const userSchema = Schema.object({
 	name: Schema.string(),
 	age: Schema.number().optional(),
 	active: Schema.boolean().default(true),
+	identifier: Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]),
 });
 ```
 
@@ -55,6 +59,28 @@ requiredName === optionalName;
 ```
 
 
+### Union schemas
+
+Use `Schema.union()` when a value may satisfy any of several explicit schemas.
+
+```js
+const identifierSchema = Schema.union([
+	Schema.string(),
+	Schema.number(),
+]);
+
+identifierSchema.test('user-42');
+// ↳ true
+
+identifierSchema.test(42);
+// ↳ true
+```
+
+Union alternatives are ordered and use inclusive OR semantics. The union itself owns required/optional behavior and root defaults; nested defaults inside a selected alternative still apply.
+
+See [Unions](docs/unions.md) for validation, defaulting, merging, and extension behavior.
+
+
 ### Validating values
 
 Use `validate()` when the invalid value itself should produce an exception, or `test()` when a boolean result is enough.
@@ -63,13 +89,17 @@ Use `validate()` when the invalid value itself should produce an exception, or `
 userSchema.validate({
 	name: 'Ada',
 	age: 36,
+	active: true,
+	identifier: 'user-42',
 });
-// ↳ {name: 'Ada', age: 36}
+// ↳ {name: 'Ada', age: 36, active: true, identifier: 'user-42'}
 ```
 
 ```js
 userSchema.test({
 	name: 42,
+	active: true,
+	identifier: 'user-42',
 });
 // ↳ false
 ```
@@ -82,6 +112,8 @@ import Schema, {ValidationError} from 'egoki';
 try {
 	userSchema.validate({
 		name: 42,
+		active: true,
+		identifier: 'user-42',
 	});
 } catch (error) {
 	if (error instanceof ValidationError) {
@@ -210,6 +242,7 @@ The default and named `Schema` exports provide the factory and utility methods u
 | `Schema.boolean()` | — | `BooleanSchema` | Creates a boolean schema. |
 | `Schema.array(items?)` | `Schema` | `ArraySchema` | Creates an array schema, optionally with an item schema. |
 | `Schema.object(properties?)` | `Record<string, Schema>` | `ObjectSchema` | Creates an object schema, optionally with declared property schemas. |
+| `Schema.union(schemas)` | `Schema[]` | `UnionSchema` | Creates a schema accepting at least one alternative. |
 | `Schema.isSchema(value)` | `unknown` | `boolean` | Determines whether a value is a schema instance. |
 
 
@@ -242,7 +275,14 @@ These schemas validate JavaScript strings, numbers, and booleans respectively.
 | - | - | - | - |
 | `.enum(values)` | `unknown[]` | `this` | Restricts primitive runtime values to an allowed set. |
 
-`enum()` is available only on primitive schemas. Array and object schemas do not expose it. 
+`enum()` is available only on primitive schemas. Array, object, and union schemas do not expose it. 
+
+
+### `UnionSchema`
+
+`UnionSchema` accepts a runtime value when at least one configured alternative schema accepts it. It uses replacement merging and can be nested anywhere another schema is accepted.
+
+See [Unions](docs/unions.md) for alternative ordering, defaults, validation errors, and extension behavior.
 
 
 ### `ArraySchema`
@@ -288,3 +328,4 @@ See [Validation](docs/validation.md) for the structure of validation issues.
 - [Merging](docs/merging.md) — merge strategies and recursive merging.
 - [Resolution](docs/resolution.md) — applying defaults, merging values, and validating the result as one operation.
 - [Composition](docs/composition.md) - composing and extending schemas.
+- [Unions](docs/unions.md) — accepting values through one or more alternative schemas.

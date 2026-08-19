@@ -38,7 +38,14 @@ test('Schema factories expose no internal configuration parameter', t => {
 test('Schema factories expose no concrete schema constructors', async t => {
 	const module = await import('../../source/index.js');
 
-	for (const name of ['StringSchema', 'NumberSchema', 'BooleanSchema', 'ArraySchema', 'ObjectSchema']) {
+	for (const name of [
+		'StringSchema',
+		'NumberSchema',
+		'BooleanSchema',
+		'ArraySchema',
+		'ObjectSchema',
+		'UnionSchema',
+	]) {
 		t.false(
 			Object.hasOwn(module, name),
 		);

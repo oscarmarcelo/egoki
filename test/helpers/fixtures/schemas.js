@@ -10,6 +10,9 @@ const schemas = {
 		Schema.string(),
 	),
 	object: () => Schema.object(),
+	union: () => Schema.union([
+		Schema.string(),
+	]),
 };
 
 

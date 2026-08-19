@@ -56,6 +56,90 @@ test('Schema.boolean() returns a new instance', t => {
 });
 
 
+
+test('Schema.union() returns a schema instance', t => {
+	const schema = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]);
+
+	t.true(
+		Schema.isSchema(schema),
+	);
+});
+
+
+test('Schema.union() returns a new instance', t => {
+	const alternatives = [
+		Schema.string(),
+	];
+
+	t.not(
+		Schema.union(alternatives),
+		Schema.union(alternatives),
+	);
+});
+
+
+test('Schema.union() accepts one alternative without collapsing the union schema', t => {
+	const schema = Schema.union([
+		Schema.string(),
+	]);
+
+	assertTypeError(
+		t,
+		() => {
+			schema.extend(Schema.string());
+		},
+	);
+});
+
+
+test('Schema.union() rejects a non-array alternatives value', t => {
+	const error = assertTypeError(
+		t,
+		() => {
+			Schema.union(Schema.string());
+		},
+	);
+
+	t.true(
+		error.message.startsWith('Schema.union() expects an array. Got '),
+	);
+});
+
+
+test('Schema.union() rejects an empty alternatives array', t => {
+	const error = assertTypeError(
+		t,
+		() => {
+			Schema.union([]);
+		},
+	);
+
+	t.true(
+		error.message.startsWith('Schema.union() expects a non-empty array. Got '),
+	);
+});
+
+
+test('Schema.union() rejects a non-schema alternative', t => {
+	const error = assertTypeError(
+		t,
+		() => {
+			Schema.union([
+				Schema.string(),
+				false,
+			]);
+		},
+	);
+
+	t.true(
+		error.message.startsWith('Schema.union() expects every item to be a Schema'),
+	);
+});
+
+
 test('Schema.array() returns a schema instance', t => {
 	const schema = Schema.array(
 		Schema.string(),

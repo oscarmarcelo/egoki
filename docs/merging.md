@@ -8,7 +8,7 @@ The operation does not mutate either supplied value. The returned value always s
 
 ## Replacement
 
-Replacement is the default strategy for primitive schemas and arrays.
+Replacement is the default strategy for primitive schemas, arrays, and unions.
 
 ```js
 Schema.string().merge('old', 'new');
@@ -129,5 +129,8 @@ const schema = Schema.object()
 | Primitive schemas | `replace` | `replace()` |
 | `ArraySchema` | `replace` | `replace()`, `append()`, `prepend()`, `keyedBy()` |
 | `ObjectSchema` | `deep` | `replace()`, `deep()` |
+| `UnionSchema` | `replace` | `replace()` |
+
+A union never infers a merge strategy from a matching alternative; its own replacement strategy remains authoritative.
 
 Strategy builders are available only on schemas that support them. This prevents incompatible merge configurations from being represented by the public API.

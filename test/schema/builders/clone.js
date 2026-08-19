@@ -93,3 +93,30 @@ test('Schema.clone() preserves composite schema behavior', t => {
 		},
 	);
 });
+
+
+test('Schema.clone() preserves union behavior', t => {
+	const schema = Schema.union([
+		Schema.string(),
+		Schema.number(),
+	]);
+
+	const clone = schema.clone();
+
+	t.not(
+		clone,
+		schema,
+	);
+
+	t.true(
+		clone.test('text'),
+	);
+
+	t.true(
+		clone.test(42),
+	);
+
+	t.false(
+		clone.test(false),
+	);
+});

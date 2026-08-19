@@ -63,3 +63,8 @@ schema.resolve(target, source);
 ```
 
 Use `applyDefaults()`, `merge()`, or `validate()` individually when you need control over the individual stages or do not need all of them. `applyDefaults()` and `merge()` still guarantee that any returned value satisfies the schema.
+
+
+## Unions
+
+For a union schema, `resolve()` follows the same pipeline without adding union-specific resolution semantics. Union-aware default application runs first, replacement merging runs second, and the final value must satisfy at least one alternative. See [Unions](unions.md) for the underlying union behavior.

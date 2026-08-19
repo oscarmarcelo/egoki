@@ -5,7 +5,14 @@ import Schema from '../../source/index.js';
 
 
 test('All schemas expose extend()', t => {
-	for (const schema of [Schema.string(), Schema.number(), Schema.boolean(), Schema.array(), Schema.object()]) {
+	for (const schema of [
+		Schema.string(),
+		Schema.number(),
+		Schema.boolean(),
+		Schema.array(),
+		Schema.object(),
+		Schema.union([Schema.string()]),
+	]) {
 		t.is(
 			typeof schema.extend,
 			'function',
@@ -24,8 +31,12 @@ test('Primitive schemas expose enum()', t => {
 });
 
 
-test('Composite schemas do not expose enum()', t => {
-	for (const schema of [Schema.array(), Schema.object()]) {
+test('Non-primitive schemas do not expose enum()', t => {
+	for (const schema of [
+		Schema.array(),
+		Schema.object(),
+		Schema.union([Schema.string()]),
+	]) {
 		t.is(
 			schema.enum,
 			undefined,
@@ -63,7 +74,12 @@ test('ObjectSchema exposes deep()', t => {
 
 
 test('Schemas do not expose incompatible merge strategy builders', t => {
-	for (const schema of [Schema.string(), Schema.number(), Schema.boolean()]) {
+	for (const schema of [
+		Schema.string(),
+		Schema.number(),
+		Schema.boolean(),
+		Schema.union([Schema.string()]),
+	]) {
 		t.is(
 			schema.append,
 			undefined,

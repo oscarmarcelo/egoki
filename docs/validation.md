@@ -74,6 +74,28 @@ The values supplied to `.enum()` must be compatible with the schema, and the enu
 
 
 
+## Union validation
+
+`Schema.union()` accepts a defined runtime value when at least one alternative accepts it. Matching is inclusive, so a value may satisfy more than one alternative.
+
+```js
+const schema = Schema.union([
+	Schema.string(),
+	Schema.number(),
+]);
+
+schema.test('text');
+// true
+
+schema.test(42);
+// true
+```
+
+When every alternative rejects a value, validation reports one issue for the union at that location rather than exposing each attempted alternative as an independent issue.
+
+See [Unions](unions.md) for the complete union behavior.
+
+
 ## Nested validation
 
 Array and object schemas recurse into their configured child schemas.

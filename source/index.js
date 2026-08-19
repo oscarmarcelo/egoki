@@ -4,7 +4,9 @@ import NumberSchema from './schemas/number.js';
 import ObjectSchema from './schemas/object.js';
 import BaseSchema from './schemas/schema.js';
 import StringSchema from './schemas/string.js';
-import {assertProperties, assertSchema} from './utilities/assert.js';
+import UnionSchema from './schemas/union.js';
+import {assertArray, assertProperties, assertSchema} from './utilities/assert.js';
+import message from './utilities/message.js';
 import {constructionToken} from './utilities/schema-state.js';
 
 /**
@@ -66,6 +68,36 @@ const Schema = {
 		}
 
 		return new ObjectSchema(constructionToken, configuration);
+	},
+
+
+	/**
+	 * Creates a union schema.
+	 *
+	 * @param {SchemaInstance[]} schemas - Alternative schemas accepted by the union.
+	 *
+	 * @returns {UnionSchema} A new union schema.
+	 */
+	union(schemas) {
+		assertArray('Schema.union', schemas);
+
+		if (schemas.length === 0) {
+			throw new TypeError(
+				message('Schema.union() expects a non-empty array', schemas),
+			);
+		}
+
+		for (const schema of schemas) {
+			if (!BaseSchema.isSchema(schema)) {
+				throw new TypeError(
+					message('Schema.union() expects every item to be a Schema', schema, schemas),
+				);
+			}
+		}
+
+		return new UnionSchema(constructionToken, {
+			alternatives: [...schemas],
+		});
 	},
 
 

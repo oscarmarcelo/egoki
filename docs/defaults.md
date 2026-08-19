@@ -70,6 +70,15 @@ The operation does not modify either the schema or the supplied runtime value.
 
 
 
+## Union defaults
+
+A union owns its required/optional state and its root default. Root defaults configured on alternatives do not provide a default for an omitted union value.
+
+Nested defaults inside an alternative still apply when processing a defined runtime value. Alternatives are considered in declaration order, and the first one that can produce a value satisfying itself determines the result.
+
+See [Unions](unions.md) for examples and ordering behavior.
+
+
 ## Defaults and merging
 
 `merge()` does not apply defaults automatically. If defaulting is required before merging, apply defaults explicitly or use `resolve()`, which performs the complete resolution pipeline.

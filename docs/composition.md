@@ -73,6 +73,16 @@ When both schemas define the same schema option, the extension schema takes prec
 
 For example, an extension can replace an enum or merge strategy, while an existing default remains when the extension does not configure one.
 
+
+## Extending unions
+
+Unions recurse pairwise only when both schemas contain the same number of alternatives and the concrete schema types match at every position. Otherwise, the extension's complete alternative list replaces the base list.
+
+`extend()` never broadens a union by implicitly combining alternatives, and it never reorders or matches alternatives outside their declared positions.
+
+See [Unions](unions.md) for examples and the complete compatibility rules.
+
+
 ## Extension versus merging
 
 Schema composition and runtime value merging are deliberately separate:
