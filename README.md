@@ -9,6 +9,7 @@ From Basque (`/eˈɣ̞o.ki/` → eh-GOH-kee), meaning “suitable, appropriate, 
 ## Features
 
 - Compose schemas with an immutable fluent API.
+- Extend compatible schemas recursively without mutating either schema.
 - Validate primitive values, arrays, and plain objects.
 - Configure required and optional values, defaults, and allowed values.
 - Recursively validate, default, and merge nested arrays and objects.
@@ -29,6 +30,7 @@ npm install egoki
 ## Usage
 
 Egoki schemas are built with `Schema` factory methods and configured with chainable methods. Schema operations never modify the supplied schema or runtime values. Value-producing operations return values that satisfy the schema, or throw instead of returning an invalid value.
+
 
 ### Creating schemas
 
@@ -51,6 +53,7 @@ const optionalName = requiredName.optional();
 requiredName === optionalName;
 // ↳ false
 ```
+
 
 ### Validating values
 
@@ -89,6 +92,7 @@ try {
 
 See [Validation](docs/validation.md) for validation behavior and structured issues.
 
+
 ### Defaults
 
 Use `default()` to provide a value when the runtime value is `undefined`. Defaults are applied explicitly with `applyDefaults()`.
@@ -105,6 +109,7 @@ schema.applyDefaults({});
 Defaults can be applied recursively to nested schemas and additional properties configured with a schema.
 
 See [Defaults](docs/defaults.md) for configuring and applying default values.
+
 
 ### Merging values
 
@@ -146,6 +151,7 @@ schema.merge([1, 2], [3, 4]);
 
 See [Merging](docs/merging.md) for the available strategies and recursive behavior.
 
+
 ### Resolving values
 
 `resolve()` combines defaulting, merging, and validation into one operation. It first applies defaults to the target, merges the source, and validates the resulting value.
@@ -185,22 +191,30 @@ All schemas expose the following public methods from `Schema`.
 
 | Method | Parameters | Returns | Description |
 | - | - | - | - |
-| `.required(required?)` | `boolean` | `this` | Configures whether `undefined` is accepted. |
-| `.optional()` | — | `this` | Makes `undefined` optional. |
-| `.default(value)` | `unknown` | `this` | Configures a default value for `undefined`. |
+| `.required(required?)` | `boolean` | `this` | Configures whether a value is required. |
+| `.optional()` | — | `this` | Makes a value optional. |
+| `.default(value)` | `unknown` | `this` | Configures a default value when none is defined. |
 | `.clone()` | — | `this` | Creates a distinct schema with equivalent behavior. |
-| `.replace()` | — | `this` | Uses the replace merge strategy. |
+| `.replace()` | — | `this` | Replaces source values with target values during merging. |
 | `.validate(value)` | `unknown` | `unknown` | Validates a value and throws on failure. |
 | `.test(value)` | `unknown` | `boolean` | Tests whether a value satisfies the schema. |
 | `.applyDefaults(value)` | `unknown` | `unknown` | Applies configured defaults and returns a value satisfying the schema. |
 | `.merge(target, source)` | `unknown`, `unknown` | `unknown` | Merges two values and returns a result satisfying the schema. |
 | `.resolve(target, source)` | `unknown`, `unknown` | `unknown` | Applies defaults, merges, and validates. |
 
-`enum()` is available only on primitive schemas. Array and object schemas do not expose it. Merge strategy builders are available only on the schemas that support the corresponding strategy.
+Merge strategy builders are available only on the schemas that support the corresponding strategy.
+
 
 ### `StringSchema`, `NumberSchema`, and `BooleanSchema`
 
-These schemas validate JavaScript strings, numbers, and booleans respectively. They inherit the common schema methods above and also expose `.enum(values)`.
+These schemas validate JavaScript strings, numbers, and booleans respectively.
+
+| Method | Parameters | Returns | Description |
+| - | - | - | - |
+| `.enum(values)` | `unknown[]` | `this` | Restricts primitive runtime values to an allowed set. |
+
+`enum()` is available only on primitive schemas. Array and object schemas do not expose it. 
+
 
 ### `ArraySchema`
 
@@ -213,6 +227,7 @@ These schemas validate JavaScript strings, numbers, and booleans respectively. T
 | `.prepend()` | — | `this` | Prepends source items before target items during merging. |
 | `.keyedBy(key)` | `string` | `this` | Matches array items by an object property during merging. |
 
+
 ### `ObjectSchema`
 
 `ObjectSchema` validates plain objects and can define schemas for declared and additional properties.
@@ -221,7 +236,8 @@ These schemas validate JavaScript strings, numbers, and booleans respectively. T
 | - | - | - | - |
 | `.properties(properties)` | `Record<string, Schema>` | `this` | Configures declared property schemas. |
 | `.additionalProperties(schema)` | `Schema \| boolean` | `this` | Configures how undeclared properties are handled. |
-| `.deep()` | — | `this` | Configures recursive deep merging. |
+| `.deep()` | — | `this` | Deep merges source values with target values during merging. |
+
 
 ### `ValidationError`
 

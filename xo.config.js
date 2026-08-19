@@ -42,6 +42,7 @@ export default [
 	{
 		files: ['**/*.md'],
 		rules: {
+			'markdown/heading-increment': 'error',
 			'jsdoc/require-asterisk-prefix': 'off', // Seems to be buggy with Markdown files.
 		},
 	},
