@@ -1,8 +1,8 @@
 import {assertSchema, assertString} from '../utilities/assert.js';
 import mergeWithStrategy from '../utilities/merge-with-strategy.js';
 import message from '../utilities/message.js';
-import {createSchema, getSchemaOptions} from '../utilities/schema-state.js';
-import {applyDefaultsSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
+import {createSchema, getSchemaOptions, getSchemaState} from '../utilities/schema-state.js';
+import {applyDefaultsSymbol, extendSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
 
 import Schema from './schema.js';
 
@@ -102,6 +102,26 @@ export default class ArraySchema extends Schema {
 			merge: 'keyed',
 			key,
 		});
+	}
+
+
+	[extendSymbol](schema) {
+		const baseOptions = getSchemaOptions(this);
+		const extensionOptions = getSchemaOptions(schema);
+		const options = {
+			...baseOptions,
+			...extensionOptions,
+		};
+
+		if (
+			baseOptions.items
+			&& extensionOptions.items
+			&& getSchemaState(baseOptions.items).Class === getSchemaState(extensionOptions.items).Class
+		) {
+			options.items = baseOptions.items.extend(extensionOptions.items);
+		}
+
+		return createSchema(this, options);
 	}
 
 

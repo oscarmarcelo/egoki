@@ -168,6 +168,34 @@ schema.resolve({}, {});
 See [Resolution](docs/resolution.md) for applying defaults, merging values, and validating the result.
 
 
+### Extending schemas
+
+Use `extend()` to compose two schemas of the same root type. The result is a new schema and neither input is modified.
+
+Compatible nested schemas are extended recursively. When nested schema types are incompatible, the extension schema replaces the existing nested schema. The root schema type itself must match.
+
+```js
+const base = Schema.object({
+	options: Schema.object({
+		enabled: Schema.boolean(),
+	}),
+});
+
+const extension = Schema.object({
+	options: Schema.object({
+		timeout: Schema.number(),
+	}),
+	variants: Schema.array(Schema.object()),
+});
+
+const combined = base.extend(extension);
+```
+
+`extend()` composes schema definitions only. It does not use runtime merge strategies; `merge()` remains the operation for combining runtime values.
+
+See [Composition](docs/composition.md) for recursive behavior and option precedence.
+
+
 
 ## API
 
@@ -196,6 +224,7 @@ All schemas expose the following public methods from `Schema`.
 | `.default(value)` | `unknown` | `this` | Configures a default value when none is defined. |
 | `.clone()` | — | `this` | Creates a distinct schema with equivalent behavior. |
 | `.replace()` | — | `this` | Replaces source values with target values during merging. |
+| `.extend(schema)` | `Schema` | `this` | Extends a schema of the same root type without mutating either schema. |
 | `.validate(value)` | `unknown` | `unknown` | Validates a value and throws on failure. |
 | `.test(value)` | `unknown` | `boolean` | Tests whether a value satisfies the schema. |
 | `.applyDefaults(value)` | `unknown` | `unknown` | Applies configured defaults and returns a value satisfying the schema. |
@@ -258,3 +287,4 @@ See [Validation](docs/validation.md) for the structure of validation issues.
 - [Defaults](docs/defaults.md) — configuring and applying default values.
 - [Merging](docs/merging.md) — merge strategies and recursive merging.
 - [Resolution](docs/resolution.md) — applying defaults, merging values, and validating the result as one operation.
+- [Composition](docs/composition.md) - composing and extending schemas.

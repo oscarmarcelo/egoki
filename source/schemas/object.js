@@ -1,8 +1,8 @@
 import {assertProperties, assertSchema} from '../utilities/assert.js';
 import {isPlainObject} from '../utilities/is.js';
 import mergeWithStrategy from '../utilities/merge-with-strategy.js';
-import {createSchema, getSchemaOptions} from '../utilities/schema-state.js';
-import {applyDefaultsSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
+import {createSchema, getSchemaOptions, getSchemaState} from '../utilities/schema-state.js';
+import {applyDefaultsSymbol, extendSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
 
 import Schema from './schema.js';
 
@@ -89,6 +89,47 @@ export default class ObjectSchema extends Schema {
 			...getSchemaOptions(this),
 			merge: 'deep',
 		});
+	}
+
+
+	[extendSymbol](schema) {
+		const baseOptions = getSchemaOptions(this);
+		const extensionOptions = getSchemaOptions(schema);
+		const properties = {
+			...baseOptions.properties,
+		};
+
+		for (const [key, extensionProperty] of Object.entries(extensionOptions.properties ?? {})) {
+			const baseProperty = properties[key];
+
+			properties[key] = baseProperty && getSchemaState(baseProperty).Class === getSchemaState(extensionProperty).Class
+				? baseProperty.extend(extensionProperty)
+				: extensionProperty;
+		}
+
+		const options = {
+			...baseOptions,
+			...extensionOptions,
+			properties,
+		};
+
+		if (
+			Object.hasOwn(baseOptions, 'additionalProperties')
+			&& Object.hasOwn(extensionOptions, 'additionalProperties')
+		) {
+			const baseAdditionalProperties = baseOptions.additionalProperties;
+			const extensionAdditionalProperties = extensionOptions.additionalProperties;
+
+			if (
+				Schema.isSchema(baseAdditionalProperties)
+				&& Schema.isSchema(extensionAdditionalProperties)
+				&& getSchemaState(baseAdditionalProperties).Class === getSchemaState(extensionAdditionalProperties).Class
+			) {
+				options.additionalProperties = baseAdditionalProperties.extend(extensionAdditionalProperties);
+			}
+		}
+
+		return createSchema(this, options);
 	}
 
 

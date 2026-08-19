@@ -4,6 +4,16 @@ import Schema from '../../source/index.js';
 
 
 
+test('All schemas expose extend()', t => {
+	for (const schema of [Schema.string(), Schema.number(), Schema.boolean(), Schema.array(), Schema.object()]) {
+		t.is(
+			typeof schema.extend,
+			'function',
+		);
+	}
+});
+
+
 test('Primitive schemas expose enum()', t => {
 	for (const schema of [Schema.string(), Schema.number(), Schema.boolean()]) {
 		t.is(

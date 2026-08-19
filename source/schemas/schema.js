@@ -1,8 +1,8 @@
 import ValidationError from '../errors/validation-error.js';
-import {assertBoolean} from '../utilities/assert.js';
+import {assertBoolean, assertSchema} from '../utilities/assert.js';
 import message from '../utilities/message.js';
-import {constructionToken, createSchema, getSchemaOptions, hasSchemaState, initializeSchema} from '../utilities/schema-state.js';
-import {applyDefaultsSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
+import {constructionToken, createSchema, getSchemaOptions, getSchemaState, hasSchemaState, initializeSchema} from '../utilities/schema-state.js';
+import {applyDefaultsSymbol, extendSymbol, mergeSymbol, validateSymbol} from '../utilities/symbols.js';
 
 
 
@@ -144,6 +144,36 @@ export default class Schema {
 			value,
 			message: issueMessage,
 		};
+	}
+
+
+	/**
+	 * Extends this schema with another schema of the same type.
+	 *
+	 * @param {Schema} schema - The schema to extend this schema with.
+	 *
+	 * @returns {this} A new extended schema.
+	 *
+	 * @throws {TypeError} If `schema` is not a schema instance or has a different root type.
+	 */
+	extend(schema) {
+		assertSchema('extend', schema);
+
+		if (getSchemaState(schema).Class !== getSchemaState(this).Class) {
+			throw new TypeError(
+				message('extend() expects a schema of the same type', schema),
+			);
+		}
+
+		return this[extendSymbol](schema);
+	}
+
+
+	[extendSymbol](schema) {
+		return createSchema(this, {
+			...getSchemaOptions(this),
+			...getSchemaOptions(schema),
+		});
 	}
 
 
