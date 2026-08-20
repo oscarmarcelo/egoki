@@ -261,8 +261,8 @@ All schemas expose the following public methods from `Schema`.
 | `.validate(value)` | `unknown` | `unknown` | Validates a value and throws on failure. |
 | `.test(value)` | `unknown` | `boolean` | Tests whether a value satisfies the schema. |
 | `.applyDefaults(value)` | `unknown` | `unknown` | Applies configured defaults and returns a value satisfying the schema. |
-| `.merge(target, source)` | `unknown`, `unknown` | `unknown` | Merges two values and returns a result satisfying the schema. |
-| `.resolve(target, source)` | `unknown`, `unknown` | `unknown` | Applies defaults, merges, and validates. |
+| `.merge(target, ...sources)` | `unknown`, `...unknown[]` | `unknown` | Merges sources from left to right and validates only the final result. |
+| `.resolve(target, ...sources)` | `unknown`, `...unknown[]` | `unknown` | Resolves sources transactionally with defaults before and after merging, then validates once. |
 
 Merge strategy builders are available only on the schemas that support the corresponding strategy.
 

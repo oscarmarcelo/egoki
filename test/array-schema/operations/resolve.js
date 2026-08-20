@@ -129,3 +129,177 @@ test('ArraySchema.resolve() does not modify either supplied runtime value', t =>
 		],
 	);
 });
+
+
+
+// =============================================================================
+// Multiple Sources
+// =============================================================================
+
+test('ArraySchema.resolve() appends multiple sources after the configured root default', t => {
+	t.deepEqual(
+		Schema.array(Schema.string())
+			.append()
+			.default(['default'])
+			.resolve(
+				undefined,
+				['first'],
+				['second'],
+			),
+		['default', 'first', 'second'],
+	);
+});
+
+
+test('ArraySchema.resolve() prepends multiple sources before the configured root default', t => {
+	t.deepEqual(
+		Schema.array(Schema.string())
+			.prepend()
+			.default(['default'])
+			.resolve(
+				undefined,
+				['first'],
+				['second'],
+			),
+		['second', 'first', 'default'],
+	);
+});
+
+
+test('ArraySchema.resolve() uses a configured root default as the base of keyed merging', t => {
+	const schema = Schema.array(
+		Schema.object({
+			id: Schema.number(),
+			name: Schema.string(),
+		}),
+	)
+		.keyedBy('id')
+		.default([
+			{id: 1, name: 'Default'},
+		]);
+
+	t.deepEqual(
+		schema.resolve(
+			undefined,
+			[{id: 1, name: 'Configured'}],
+			[{id: 2, name: 'Added'}],
+		),
+		[
+			{id: 1, name: 'Configured'},
+			{id: 2, name: 'Added'},
+		],
+	);
+});
+
+
+
+// =============================================================================
+// Final Defaulting
+// =============================================================================
+
+test('ArraySchema.resolve() applies item defaults to items introduced by sources', t => {
+	const schema = Schema.array(
+		Schema.object({
+			name: Schema.string(),
+			enabled: Schema.boolean().default(true),
+		}),
+	).append();
+
+	t.deepEqual(
+		schema.resolve(
+			[],
+			[{name: 'First'}],
+			[{name: 'Second', enabled: false}],
+		),
+		[
+			{name: 'First', enabled: true},
+			{name: 'Second', enabled: false},
+		],
+	);
+});
+
+
+test('ArraySchema.resolve() applies defaults to new keyed items introduced by sources', t => {
+	const schema = Schema.array(
+		Schema.object({
+			id: Schema.number(),
+			name: Schema.string(),
+			enabled: Schema.boolean().default(true),
+		}),
+	).keyedBy('id');
+
+	t.deepEqual(
+		schema.resolve(
+			[],
+			[{id: 1, name: 'First'}],
+			[{id: 2, name: 'Second', enabled: false}],
+		),
+		[
+			{id: 1, name: 'First', enabled: true},
+			{id: 2, name: 'Second', enabled: false},
+		],
+	);
+});
+
+
+
+// =============================================================================
+// Default Immutability
+// =============================================================================
+
+test('ArraySchema.resolve() does not mutate configured defaults', t => {
+	const configuredDefault = [
+		{
+			name: 'Default',
+			enabled: true,
+		},
+	];
+
+	const schema = Schema.array(
+		Schema.object({
+			name: Schema.string(),
+			enabled: Schema.boolean().default(true),
+		}),
+	)
+		.append()
+		.default(configuredDefault);
+
+	schema.resolve(undefined, [{name: 'Source'}]);
+
+	t.deepEqual(
+		configuredDefault,
+		[
+			{
+				name: 'Default',
+				enabled: true,
+			},
+		],
+	);
+});
+
+
+test('ArraySchema.resolve() does not leak mutations between repeated results', t => {
+	const schema = Schema.array(
+		Schema.object({
+			name: Schema.string(),
+			enabled: Schema.boolean().default(true),
+		}),
+	).append();
+
+	const source = [{name: 'Source'}];
+	const first = schema.resolve([], source);
+	first[0].name = 'Changed';
+	first[0].enabled = false;
+
+	const second = schema.resolve([], source);
+
+	t.deepEqual(
+		source,
+		[{name: 'Source'}],
+	);
+
+	t.deepEqual(
+		second,
+		[{name: 'Source', enabled: true}],
+	);
+});

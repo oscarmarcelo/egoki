@@ -274,17 +274,26 @@ export default class Schema {
 
 
 	/**
-	 * Merges two runtime values according to the schema's merge strategy.
+	 * Merges runtime values according to the schema's merge strategy.
 	 *
-	 * @param {unknown} target - The target value.
-	 * @param {unknown} source - The source value.
+	 * Sources are merged into the target from left to right.
+	 * Only the final accumulated result is validated.
+	 *
+	 * @param {unknown} [target] - The target value.
+	 * @param {...unknown} [sources] - The source values.
 	 *
 	 * @returns {unknown} The merged runtime value.
 	 *
-	 * @throws {ValidationError} If the merged value does not satisfy the schema.
+	 * @throws {ValidationError} If the final merged value does not satisfy the schema.
 	 */
-	merge(target, source) {
-		return this.validate(this[mergeSymbol](target, source));
+	merge(target, ...sources) {
+		let result = target;
+
+		for (const source of sources) {
+			result = this[mergeSymbol](result, source);
+		}
+
+		return this.validate(result);
 	}
 
 
@@ -298,21 +307,27 @@ export default class Schema {
 
 
 	/**
-	 * Applies defaults, merges the source, and validates the result.
+	 * Applies defaults, merges runtime values, reapplies defaults, and validates the result.
 	 *
-	 * @param {unknown} target - The target value.
-	 * @param {unknown} source - The source value.
+	 * Sources are merged into the internally defaulted target from left to right.
+	 * Intermediate values are not publicly validated.
+	 *
+	 * @param {unknown} [target] - The target value.
+	 * @param {...unknown} [sources] - The source values.
 	 *
 	 * @returns {unknown} The validated resolved value.
 	 *
-	 * @throws {ValidationError} If the resolved value is invalid.
+	 * @throws {ValidationError} If the final resolved value is invalid.
 	 */
-	resolve(target, source) {
-		return this.validate(
-			this.merge(
-				this.applyDefaults(target),
-				source,
-			),
-		);
+	resolve(target, ...sources) {
+		let result = this[applyDefaultsSymbol](target);
+
+		for (const source of sources) {
+			result = this[mergeSymbol](result, source);
+		}
+
+		result = this[applyDefaultsSymbol](result);
+
+		return this.validate(result);
 	}
 }

@@ -527,3 +527,109 @@ test('Keyed merge rejects a source item without the merge key when the target is
 		),
 	);
 });
+
+
+
+// =============================================================================
+// Multiple Sources
+// =============================================================================
+
+test('ArraySchema.merge() appends multiple sources from left to right', t => {
+	t.deepEqual(
+		Schema.array(Schema.number())
+			.append()
+			.merge([1], [2], [3], [4]),
+		[1, 2, 3, 4],
+	);
+});
+
+
+test('ArraySchema.merge() prepends multiple sources from left to right', t => {
+	t.deepEqual(
+		Schema.array(Schema.number())
+			.prepend()
+			.merge([1], [2], [3], [4]),
+		[4, 3, 2, 1],
+	);
+});
+
+
+test('ArraySchema.merge() keyed merging updates stable positions and appends new items across multiple sources', t => {
+	const schema = Schema.array(createKeyedObjectSchema())
+		.keyedBy('id');
+
+	t.deepEqual(
+		schema.merge(
+			[
+				{id: 1, name: 'One'},
+				{id: 2, name: 'Two'},
+			],
+			[
+				{id: 2, name: 'Two A'},
+				{id: 3, name: 'Three'},
+			],
+			[
+				{id: 1, name: 'One B'},
+				{id: 4, name: 'Four'},
+			],
+			[
+				{id: 3, name: 'Three C'},
+				{id: 5, name: 'Five'},
+			],
+		),
+		[
+			{id: 1, name: 'One B'},
+			{id: 2, name: 'Two A'},
+			{id: 3, name: 'Three C'},
+			{id: 4, name: 'Four'},
+			{id: 5, name: 'Five'},
+		],
+	);
+});
+
+
+test('ArraySchema.merge() keyed merging still rejects a missing key in a later source', t => {
+	const schema = Schema.array(createKeyedObjectSchema())
+		.keyedBy('id');
+
+	assertTypeError(
+		t,
+		() => {
+			schema.merge(
+				[{id: 1, name: 'One'}],
+				[{id: 2, name: 'Two'}],
+				[{name: 'Missing'}],
+			);
+		},
+	);
+});
+
+
+test('ArraySchema.merge() keyed merging still rejects duplicate keys in a later source', t => {
+	const schema = Schema.array(createKeyedObjectSchema())
+		.keyedBy('id');
+
+	assertTypeError(
+		t,
+		() => {
+			schema.merge(
+				[{id: 1, name: 'One'}],
+				[{id: 2, name: 'Two'}],
+				[
+					{id: 3, name: 'Three'},
+					{id: 3, name: 'Duplicate'},
+				],
+			);
+		},
+	);
+});
+
+
+test('ArraySchema.merge() with one array argument treats it as one runtime value', t => {
+	const value = [1, 2];
+
+	t.is(
+		Schema.array(Schema.number()).merge(value),
+		value,
+	);
+});

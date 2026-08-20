@@ -1,8 +1,32 @@
 # Merging
 
-`merge(target, source)` combines two runtime values according to the schema's configured merge strategy.
+`merge(target, ...sources)` combines runtime values according to the schema's configured merge strategy.
 
-The operation does not mutate either supplied value. The returned value always satisfies the schema. If merging produces an invalid result, `merge()` throws a `ValidationError` instead of returning it. A returned value may be one of the supplied values or share references with them when the configured strategy permits it. Builder methods also return new schemas, so merge configuration can be reused safely.
+The first argument is the target. Every additional argument is a source, merged into the accumulated result from left to right. Later sources therefore have greater precedence whenever the configured strategy replaces the same value.
+
+`merge()` does not validate the target, individual sources, or intermediate merged values. Only the final accumulated result is validated. This allows several individually incomplete fragments to be combined transactionally when the final value satisfies the schema.
+
+The operation does not mutate the target or any source. A returned value may still be one of the supplied values or share references with them when the configured strategy permits it. Builder methods also return new schemas, so merge configuration can be reused safely.
+
+Ordinary two-value calls remain supported:
+
+```js
+schema.merge(target, source);
+```
+
+With one argument, no merge step occurs and the target itself is validated:
+
+```js
+schema.merge(value);
+```
+
+With no arguments, `undefined` is validated. This succeeds only when `undefined` satisfies the schema.
+
+A single array argument is always one runtime value, not a collection of merge inputs:
+
+```js
+Schema.array(Schema.number()).merge([1, 2]);
+```
 
 
 
@@ -14,40 +38,43 @@ Replacement is the default strategy for primitive schemas, arrays, and unions.
 Schema.string().merge('old', 'new');
 // ↳ 'new'
 
+Schema.string().merge('old', 'new', 'newer');
+// ↳ 'newer'
+
 Schema.array().merge([1, 2], [3, 4]);
 // ↳ [3, 4]
 ```
 
 `.replace()` explicitly selects the replacement strategy.
 
-If the source is `undefined`, the target is retained.
+If a source is `undefined`, the accumulated target is retained.
 
 
 
 ## Append
 
-`.append()` appends source array elements after target elements.
+`.append()` appends each source array after the accumulated target.
 
 ```js
 const schema = Schema.array(Schema.number()).append();
 
-schema.merge([1, 2], [3, 4]);
+schema.merge([1, 2], [3], [4]);
 // ↳ [1, 2, 3, 4]
 ```
 
-The strategy requires both values to be arrays when a target exists.
+The strategy requires every defined value it combines to be an array.
 
 
 
 ## Prepend
 
-`.prepend()` places source elements before target elements.
+`.prepend()` places each source before the accumulated target.
 
 ```js
 const schema = Schema.array(Schema.number()).prepend();
 
-schema.merge([1, 2], [3, 4]);
-// ↳ [3, 4, 1, 2]
+schema.merge([3, 4], [2], [1]);
+// ↳ [1, 2, 3, 4]
 ```
 
 
@@ -82,9 +109,9 @@ schema.merge(
 //   ]
 ```
 
-Matched elements are merged using the configured item schema when one exists. Without an item schema, a matching source element replaces the corresponding target element. Existing target elements retain their positions, while new source elements are added in source order.
+Matched elements are merged using the configured item schema when one exists. Without an item schema, a matching source element replaces the corresponding target element. Existing target elements retain their positions, while new source elements are added in source order. These rules apply at every source step in a multi-source merge.
 
-Keyed merging is strict: every item in both input arrays must contain the configured key, and keys must be unique within each array. Missing or duplicate keys cause a `TypeError`.
+Keyed merging is strict: every item in each participating array must contain the configured key, and keys must be unique within each array. Missing or duplicate keys cause a `TypeError`.
 
 
 
@@ -101,7 +128,8 @@ const schema = Schema.object({
 });
 
 schema.merge(
-	{settings: {language: 'en', theme: 'light'}},
+	{settings: {language: 'en'}},
+	{settings: {theme: 'light'}},
 	{settings: {language: 'pt'}},
 );
 // ↳ {settings: {language: 'pt', theme: 'light'}}
@@ -119,6 +147,21 @@ const schema = Schema.object()
 ```
 
 `.deep()` explicitly selects the deep strategy for an object schema.
+
+Because only the final result is validated, required object properties may be supplied by different fragments:
+
+```js
+const schema = Schema.object({
+	format: Schema.string(),
+	quality: Schema.number(),
+});
+
+schema.merge(
+	{quality: 70},
+	{format: 'webp'},
+);
+// ↳ {format: 'webp', quality: 70}
+```
 
 
 

@@ -38,3 +38,30 @@ test('UnionSchema.resolve() returns recursively defaulted target when the source
 		},
 	);
 });
+
+
+test('UnionSchema.resolve() applies nested defaults to an alternative introduced by a later source', t => {
+	const schema = Schema.union([
+		Schema.object({
+			kind: Schema.string().enum(['object']),
+			options: Schema.object({
+				enabled: Schema.boolean().default(true), // eslint-disable-line unicorn/max-nested-calls
+			}),
+		}),
+		Schema.string(),
+	]);
+
+	t.deepEqual(
+		schema.resolve(
+			'initial',
+			{
+				kind: 'object',
+				options: {},
+			},
+		),
+		{
+			kind: 'object',
+			options: {enabled: true},
+		},
+	);
+});

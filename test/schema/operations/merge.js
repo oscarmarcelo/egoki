@@ -107,3 +107,112 @@ test('merge() replaces boolean runtime values with the source runtime value', t 
 		),
 	);
 });
+
+
+
+// =============================================================================
+// Multiple Sources
+// =============================================================================
+
+test('merge() merges multiple replacement sources from left to right', t => {
+	t.is(
+		Schema.string().merge(
+			'target',
+			'first',
+			'second',
+			'third',
+		),
+		'third',
+	);
+});
+
+
+test('merge() ignores omitted sources while accumulating multiple sources', t => {
+	t.is(
+		Schema.string().merge(
+			'target',
+			undefined,
+			'source',
+		),
+		'source',
+	);
+});
+
+
+
+// =============================================================================
+// Transactional Validation
+// =============================================================================
+
+test('merge() allows incomplete intermediate runtime values when the final result is valid', t => {
+	const schema = Schema.object({
+		first: Schema.string(),
+		second: Schema.string(),
+		third: Schema.string(),
+		fourth: Schema.string(),
+	});
+
+	t.deepEqual(
+		schema.merge(
+			{first: 'first'},
+			{second: 'second'},
+			{third: 'third'},
+			{fourth: 'fourth'},
+		),
+		{
+			first: 'first',
+			second: 'second',
+			third: 'third',
+			fourth: 'fourth',
+		},
+	);
+});
+
+
+test('merge() rejects a final runtime value that remains incomplete after multiple sources', t => {
+	const schema = Schema.object({
+		first: Schema.string(),
+		second: Schema.string(),
+		third: Schema.string(),
+	});
+
+	assertValidationError(
+		t,
+		() => {
+			schema.merge(
+				{first: 'first'},
+				{second: 'second'},
+			);
+		},
+	);
+});
+
+
+
+// =============================================================================
+// Argument Count
+// =============================================================================
+
+test('merge() with one argument validates and returns the target runtime value', t => {
+	const value = 'John';
+
+	t.is(
+		Schema.string().merge(value),
+		value,
+	);
+});
+
+
+test('merge() with no arguments validates an omitted runtime value', t => {
+	assertValidationError(
+		t,
+		() => {
+			Schema.string().merge();
+		},
+	);
+
+	t.is(
+		Schema.string().optional().merge(),
+		undefined,
+	);
+});
