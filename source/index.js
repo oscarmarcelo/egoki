@@ -124,8 +124,9 @@ const Schema = {
 	 * Determines whether a value is a schema instance.
 	 *
 	 * @param {unknown} value - The value to inspect.
+	 * @param {'string' | 'number' | 'boolean' | 'array' | 'object' | 'union'} [type] - Optional schema type to require.
 	 *
-	 * @returns {boolean} Whether the value is a schema instance.
+	 * @returns {boolean} Whether the value is a matching schema instance.
 	 */
 	isSchema: BaseSchema.isSchema,
 };

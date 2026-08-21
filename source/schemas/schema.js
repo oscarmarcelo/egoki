@@ -29,10 +29,21 @@ export default class Schema {
 	 * Determines whether a value is a schema instance.
 	 *
 	 * @param {unknown} value - The value to inspect.
+	 * @param {string} [type] - Optional schema type to require.
 	 *
 	 * @returns {boolean} Whether the value is a schema instance.
 	 */
-	static isSchema(value) {
+	static isSchema(value, type) {
+		if (arguments.length > 1) {
+			if (typeof type !== 'string' || !schemaTypes.has(type)) {
+				throw new TypeError(
+					message('Schema.isSchema() expects a valid schema type', type),
+				);
+			}
+
+			return hasSchemaState(value) && getSchemaState(value).type === type;
+		}
+
 		return hasSchemaState(value);
 	}
 

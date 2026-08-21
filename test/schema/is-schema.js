@@ -1,6 +1,7 @@
 import test from 'ava';
 
 import Schema from '../../source/index.js';
+import assertTypeError from '../helpers/assert-type-error.js';
 import nonSchemas from '../helpers/fixtures/non-schemas.js';
 import label from '../helpers/label.js';
 
@@ -83,6 +84,52 @@ for (const value of nonSchemas) {
 				Schema.isSchema(
 					value,
 				);
+			},
+		);
+	});
+}
+
+
+
+const typedSchemas = [
+	['string', Schema.string()],
+	['number', Schema.number()],
+	['boolean', Schema.boolean()],
+	['array', Schema.array()],
+	['object', Schema.object()],
+	['union', Schema.union([Schema.string()])],
+];
+
+
+for (const [type, schema] of typedSchemas) {
+	test(`Schema.isSchema() returns true for matching ${type} type`, t => {
+		t.true(
+			Schema.isSchema(schema, type),
+		);
+	});
+}
+
+
+test('Schema.isSchema() returns false for a different schema type', t => {
+	t.false(
+		Schema.isSchema(Schema.string(), 'number'),
+	);
+});
+
+
+test('Schema.isSchema() returns false for a non-schema value with a valid type', t => {
+	t.false(
+		Schema.isSchema({}, 'object'),
+	);
+});
+
+
+for (const type of ['foo', '', null, undefined, 1]) {
+	test(`Schema.isSchema() rejects invalid schema type ${String(type)}`, t => {
+		assertTypeError(
+			t,
+			() => {
+				Schema.isSchema(Schema.string(), type);
 			},
 		);
 	});
