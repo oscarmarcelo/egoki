@@ -10,6 +10,7 @@ From Basque (`/eˈɣ̞o.ki/` → eh-GOH-kee), meaning “suitable, appropriate, 
 
 - Compose schemas with an immutable fluent API.
 - Extend compatible schemas recursively without mutating either schema.
+- Inspect schema types and navigate configured schema structures.
 - Validate primitive values, arrays, plain objects, and explicit unions of schemas.
 - Configure required and optional values, defaults, and allowed values.
 - Recursively validate, default, and merge nested arrays and objects.
@@ -79,6 +80,44 @@ identifierSchema.test(42);
 Union alternatives are ordered and use inclusive OR semantics. The union itself owns required/optional behavior and root defaults; nested defaults inside a selected alternative still apply.
 
 See [Unions](docs/unions.md) for validation, defaulting, merging, and extension behavior.
+
+
+### Inspecting schemas
+
+Every schema exposes a read-only `type` property, and `Schema.isSchema()` can optionally require a specific schema type.
+
+```js
+const schema = Schema.object({
+	user: Schema.object({
+		name: Schema.string(),
+	}),
+});
+
+schema.type;
+// ↳ 'object'
+
+Schema.isSchema(schema, 'object');
+// ↳ true
+```
+
+Use `get()` to retrieve an explicitly declared schema at a path. Use `getSchemas()` when a path may resolve through union alternatives or schema-valued additional properties. Array paths are the precise form; simple dot-separated strings are also supported.
+
+```js
+const nameSchema = schema.get(['user', 'name']);
+// ↳ StringSchema
+
+const possible = Schema.union([
+	Schema.object({
+		value: Schema.string(),
+	}),
+	Schema.object({
+		value: Schema.number(),
+	}),
+]).getSchemas('value');
+// ↳ [StringSchema, NumberSchema]
+```
+
+See [Schema Inspection](docs/inspection.md) for path syntax, arrays, unions, and additional properties.
 
 
 ### Validating values
@@ -243,12 +282,17 @@ The default and named `Schema` exports provide the factory and utility methods u
 | `Schema.array(items?)` | `Schema` | `ArraySchema` | Creates an array schema, optionally with an item schema. |
 | `Schema.object(properties?)` | `Record<string, Schema>` | `ObjectSchema` | Creates an object schema, optionally with declared property schemas. |
 | `Schema.union(schemas)` | `Schema[]` | `UnionSchema` | Creates a schema accepting at least one alternative. |
-| `Schema.isSchema(value)` | `unknown` | `boolean` | Determines whether a value is a schema instance. |
+| `Schema.isSchema(value, type?)` | `unknown`, `string` | `boolean` | Determines whether a value is a schema instance, optionally of a specific type. |
 
 
-### Common schema methods
+### Common schema properties and methods
 
-All schemas expose the following public methods from `Schema`.
+All schemas expose the following public API from `Schema`.
+
+| Property | Type | Description |
+| - | - | - |
+| `.type` | `string` | The schema's concrete public type. |
+
 
 | Method | Parameters | Returns | Description |
 | - | - | - | - |
@@ -258,6 +302,8 @@ All schemas expose the following public methods from `Schema`.
 | `.clone()` | — | `this` | Creates a distinct schema with equivalent behavior. |
 | `.replace()` | — | `this` | Replaces source values with target values during merging. |
 | `.extend(schema)` | `Schema` | `this` | Extends a schema of the same root type without mutating either schema. |
+| `.get(path?)` | `string \| Array<string \| number>` | `Schema \| undefined` | Returns the explicitly configured schema at a path. |
+| `.getSchemas(path?)` | `string \| Array<string \| number>` | `Schema[]` | Returns configured schemas that may apply at a path. |
 | `.validate(value)` | `unknown` | `unknown` | Validates a value and throws on failure. |
 | `.test(value)` | `unknown` | `boolean` | Tests whether a value satisfies the schema. |
 | `.applyDefaults(value)` | `unknown` | `unknown` | Applies configured defaults and returns a value satisfying the schema. |
@@ -327,5 +373,6 @@ See [Validation](docs/validation.md) for the structure of validation issues.
 - [Defaults](docs/defaults.md) — configuring and applying default values.
 - [Merging](docs/merging.md) — merge strategies and recursive merging.
 - [Resolution](docs/resolution.md) — applying defaults, merging values, and validating the result as one operation.
-- [Composition](docs/composition.md) - composing and extending schemas.
+- [Composition](docs/composition.md) — composing and extending schemas.
 - [Unions](docs/unions.md) — accepting values through one or more alternative schemas.
+- [Inspection](docs/inspection.md) — inspecting schema types and retrieving schemas by path.
