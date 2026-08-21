@@ -4,6 +4,24 @@ import Schema from '../../source/index.js';
 
 
 
+test('All schemas expose common inspection operations', t => {
+	for (const schema of [
+		Schema.string(),
+		Schema.number(),
+		Schema.boolean(),
+		Schema.array(),
+		Schema.object(),
+		Schema.union([Schema.string()]),
+	]) {
+		t.is(
+			typeof schema.get,
+			'function',
+		);
+	}
+});
+
+
+
 test('All schemas expose extend()', t => {
 	for (const schema of [
 		Schema.string(),

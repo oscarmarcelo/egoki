@@ -6,6 +6,7 @@ import {applyDefaultsSymbol, extendSymbol, mergeSymbol, validateSymbol} from '..
 
 
 
+const arrayIndexPattern = /^(?:0|[1-9]\d*)$/v;
 const schemaTypes = new Set([
 	'string',
 	'number',
@@ -14,6 +15,78 @@ const schemaTypes = new Set([
 	'object',
 	'union',
 ]);
+
+
+
+function normalizePath(method, path) {
+	if (path === undefined) {
+		return [];
+	}
+
+	if (typeof path === 'string') {
+		return path.split('.');
+	}
+
+	if (!Array.isArray(path)) {
+		throw new TypeError(
+			message(`${method}() expects a path string or array`, path),
+		);
+	}
+
+	for (const segment of path) {
+		if (typeof segment === 'string') {
+			continue;
+		}
+
+		if (Number.isSafeInteger(segment) && segment >= 0) {
+			continue;
+		}
+
+		throw new TypeError(
+			message(`${method}() expects path segments to be strings or non-negative integers`, segment, path),
+		);
+	}
+
+	return path;
+}
+
+
+
+function getSchemaAt(schema, segments) {
+	let currentSchema = schema;
+
+	for (const segment of segments) {
+		const {type, options} = getSchemaState(currentSchema);
+
+		if (type === 'object') {
+			const properties = options.properties ?? {};
+			const key = String(segment);
+
+			if (!Object.hasOwn(properties, key)) {
+				return undefined;
+			}
+
+			currentSchema = properties[key];
+			continue;
+		}
+
+		if (type === 'array') {
+			const isIndex = (Number.isSafeInteger(segment) && segment >= 0)
+				|| (typeof segment === 'string' && arrayIndexPattern.test(segment));
+
+			if (!isIndex || !options.items) {
+				return undefined;
+			}
+
+			currentSchema = options.items;
+			continue;
+		}
+
+		return undefined;
+	}
+
+	return currentSchema;
+}
 
 
 
@@ -78,6 +151,20 @@ export default class Schema {
 	 */
 	get type() {
 		return getSchemaState(this).type;
+	}
+
+
+	/**
+	 * Returns the schema explicitly configured at a path.
+	 *
+	 * @param {Array<string|number>|string} [path] - The path to inspect.
+	 *
+	 * @returns {Schema|undefined} The schema at the path, when one exists.
+	 */
+	get(path) {
+		const segments = normalizePath('get', path);
+
+		return getSchemaAt(this, segments);
 	}
 
 
