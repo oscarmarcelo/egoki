@@ -90,6 +90,56 @@ function getSchemaAt(schema, segments) {
 
 
 
+function collectSchemasAt(schema, segments, results, seen) {
+	if (segments.length === 0) {
+		if (!seen.has(schema)) {
+			seen.add(schema);
+			results.push(schema);
+		}
+
+		return;
+	}
+
+	const {type, options} = getSchemaState(schema);
+
+	if (type === 'union') {
+		for (const alternative of options.alternatives) {
+			collectSchemasAt(alternative, segments, results, seen);
+		}
+
+		return;
+	}
+
+	const [segment, ...remaining] = segments;
+
+	if (type === 'object') {
+		const properties = options.properties ?? {};
+		const key = String(segment);
+
+		if (Object.hasOwn(properties, key)) {
+			collectSchemasAt(properties[key], remaining, results, seen);
+			return;
+		}
+
+		if (hasSchemaState(options.additionalProperties)) {
+			collectSchemasAt(options.additionalProperties, remaining, results, seen);
+		}
+
+		return;
+	}
+
+	if (type === 'array') {
+		const isIndex = (Number.isSafeInteger(segment) && segment >= 0)
+			|| (typeof segment === 'string' && arrayIndexPattern.test(segment));
+
+		if (isIndex && options.items) {
+			collectSchemasAt(options.items, remaining, results, seen);
+		}
+	}
+}
+
+
+
 /**
  * Base class for all schema types.
  *
@@ -165,6 +215,23 @@ export default class Schema {
 		const segments = normalizePath('get', path);
 
 		return getSchemaAt(this, segments);
+	}
+
+
+	/**
+	 * Returns the schemas that may apply at a path.
+	 *
+	 * @param {Array<string|number>|string} [path] - The path to inspect.
+	 *
+	 * @returns {Schema[]} The schemas that may apply at the path.
+	 */
+	getSchemas(path) {
+		const segments = normalizePath('getSchemas', path);
+		const results = [];
+
+		collectSchemasAt(this, segments, results, new Set());
+
+		return results;
 	}
 
 

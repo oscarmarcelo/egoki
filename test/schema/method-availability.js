@@ -17,6 +17,11 @@ test('All schemas expose common inspection operations', t => {
 			typeof schema.get,
 			'function',
 		);
+
+		t.is(
+			typeof schema.getSchemas,
+			'function',
+		);
 	}
 });
 
