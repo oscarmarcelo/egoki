@@ -11,6 +11,8 @@ import PrimitiveSchema from './primitive.js';
  * @augments PrimitiveSchema
  */
 export default class BooleanSchema extends PrimitiveSchema {
+	static schemaType = 'boolean';
+
 	/**
 	 * Creates a schema instance.
 	 *

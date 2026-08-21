@@ -12,6 +12,7 @@ export const constructionToken = Object.freeze({});
 export function initializeSchema(schema, Class, options) {
 	states.set(schema, {
 		Class,
+		type: Class.schemaType,
 		options: deepFreeze(options),
 	});
 }

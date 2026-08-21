@@ -14,6 +14,8 @@ import Schema from './schema.js';
  * @augments Schema
  */
 export default class ObjectSchema extends Schema {
+	static schemaType = 'object';
+
 	/**
 	 * Creates a schema instance.
 	 *

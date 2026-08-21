@@ -6,6 +6,17 @@ import {applyDefaultsSymbol, extendSymbol, mergeSymbol, validateSymbol} from '..
 
 
 
+const schemaTypes = new Set([
+	'string',
+	'number',
+	'boolean',
+	'array',
+	'object',
+	'union',
+]);
+
+
+
 /**
  * Base class for all schema types.
  *
@@ -46,6 +57,16 @@ export default class Schema {
 
 
 		Object.freeze(this);
+	}
+
+
+	/**
+	 * Returns the schema type.
+	 *
+	 * @returns {string} The corresponding Schema factory name.
+	 */
+	get type() {
+		return getSchemaState(this).type;
 	}
 
 

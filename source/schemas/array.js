@@ -14,6 +14,8 @@ import Schema from './schema.js';
  * @augments Schema
  */
 export default class ArraySchema extends Schema {
+	static schemaType = 'array';
+
 	/**
 	 * Creates a schema instance.
 	 *

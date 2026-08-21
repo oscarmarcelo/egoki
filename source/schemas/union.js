@@ -11,6 +11,8 @@ import Schema from './schema.js';
  * @augments Schema
  */
 export default class UnionSchema extends Schema {
+	static schemaType = 'union';
+
 	/**
 	 * Creates a schema instance.
 	 *

@@ -11,6 +11,8 @@ import PrimitiveSchema from './primitive.js';
  * @augments PrimitiveSchema
  */
 export default class NumberSchema extends PrimitiveSchema {
+	static schemaType = 'number';
+
 	/**
 	 * Creates a schema instance.
 	 *

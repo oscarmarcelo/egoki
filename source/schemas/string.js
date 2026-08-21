@@ -11,6 +11,8 @@ import PrimitiveSchema from './primitive.js';
  * @augments PrimitiveSchema
  */
 export default class StringSchema extends PrimitiveSchema {
+	static schemaType = 'string';
+
 	/**
 	 * Creates a schema instance.
 	 *
